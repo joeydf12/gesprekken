@@ -45,12 +45,14 @@ export default function ChatsView({ people, chats, selectedId, onSelect, onPaste
 
   const allPlats = useMemo(() => [...new Set(chats.map((c) => c.platform))].sort(), [chats]);
   const person = people.find((p) => p.id === selectedId);
-  const sessions = person ? chats.filter((c) => c.persoon_id === person.id).sort((a, b) => (a.datum < b.datum ? -1 : a.datum > b.datum ? 1 : 0)) : [];
+  // Oudste chat bovenaan, nieuwste onderaan; op dezelfde dag in de volgorde waarin ze zijn geplakt.
+  const sessions = person ? chats.filter((c) => c.persoon_id === person.id).sort((a, b) => (a.datum !== b.datum ? (a.datum < b.datum ? -1 : 1) : ((a.created_at || '') < (b.created_at || '') ? -1 : 1))) : [];
   const cqq = cq.trim().toLowerCase();
   const matchCount = cqq ? sessions.reduce((s, c) => s + c.messages.filter((m) => m.text.toLowerCase().includes(cqq)).length, 0) : 0;
 
   useEffect(() => {
     const el = bodyRef.current;
+    // Zoals WhatsApp: oudste bovenaan, nieuwste onderaan, en openen bij het nieuwste bericht.
     if (el && !cqq) el.scrollTop = el.scrollHeight;
   }, [selectedId, sessions.length, cqq]);
 

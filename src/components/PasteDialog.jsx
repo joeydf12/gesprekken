@@ -4,7 +4,8 @@ import { useToast } from './Toast.jsx';
 import { ConfirmButton, Modal, Note } from './ui.jsx';
 import { LOG_VIA } from '../lib/constants.js';
 import { errText } from '../lib/utils.js';
-import { ME, parseChat, todayISO } from '../lib.js';
+import { ME, expandShortcuts, firstName, parseChat, speakerKeys, todayISO } from '../lib.js';
+import ChatComposer from './ChatComposer.jsx';
 
 const EXAMPLE = `[20:14] Lisa: Hoi! Zin in een potje darts?\n[20:15] ${ME}: Altijd, wanneer?`;
 
@@ -21,12 +22,24 @@ export default function PasteDialog({ people, chatId, initialPerson, onSaved, on
   const [titel, setTitel] = useState(existing?.titel || '');
   const [tekst, setTekst] = useState(existing?.tekst || '');
   const [belangrijk, setBelangrijk] = useState(!!existing?.belangrijk);
+  const [extras, setExtras] = useState([]);       // extra namen voor groepsgesprekken
+  const [extraName, setExtraName] = useState('');
+  const other = firstName(people.find((p) => p.id === persoon)?.naam) || 'Ander';
+  const keys = useMemo(() => speakerKeys([other, ...extras]), [other, extras]);
+  // "l: hoi" -> "Lisa: hoi" (voor voorbeeld én opslaan)
+  const expanded = useMemo(() => expandShortcuts(tekst, keys), [tekst, keys]);
+  const addLine = (l) => setTekst((t) => (t && !t.endsWith('\n') ? t + '\n' : t) + l);
+  const addExtra = () => {
+    const n = extraName.trim();
+    if (n && ![ME, other, ...extras].some((x) => x.toLowerCase() === n.toLowerCase())) setExtras((l) => [...l, n]);
+    setExtraName('');
+  };
   const [msg, setMsg] = useState(null);
   const [busy, setBusy] = useState(false);
   const options = [...own, ...LOG_VIA.filter((p) => !own.includes(p))];
   if (platform && !options.includes(platform)) options.unshift(platform);
 
-  const parsed = useMemo(() => parseChat(tekst, datum), [tekst, datum]);
+  const parsed = useMemo(() => parseChat(expanded, datum), [expanded, datum]);
   const speakers = useMemo(() => {
     const c = {};
     parsed.forEach((m) => { if (m.from) c[m.from] = (c[m.from] || 0) + 1; });
@@ -39,7 +52,7 @@ export default function PasteDialog({ people, chatId, initialPerson, onSaved, on
     if (!parsed.length) { setMsg({ text: 'Plak eerst een chat.', err: true }); return; }
     setBusy(true);
     try {
-      const saved = await vault.saveChat({ id: existing?.id, persoon_id: persoon, platform, titel, datum, belangrijk, tekst: tekst.replace(/\s+$/, '') });
+      const saved = await vault.saveChat({ id: existing?.id, persoon_id: persoon, platform, titel, datum, belangrijk, tekst: expanded.replace(/\s+$/, '') });
       toast(existing ? 'Chat bijgewerkt.' : 'Chat bewaard.');
       onSaved(saved);
     } catch (err) {
@@ -94,8 +107,17 @@ export default function PasteDialog({ people, chatId, initialPerson, onSaved, on
           <input id="pd-titel" type="text" value={titel} onChange={(e) => setTitel(e.target.value)} placeholder="bv. Plannen voor zaterdag" />
         </label>
       </div>
-      <label className="field" htmlFor="pd-text">Chat
-        <textarea id="pd-text" value={tekst} onChange={(e) => setTekst(e.target.value)} placeholder={EXAMPLE} rows={10} autoFocus={!existing} />
+      <ChatComposer keys={keys} onAdd={addLine} />
+      <div className="composer-extra">
+        <input type="text" value={extraName} onChange={(e) => setExtraName(e.target.value)} placeholder="Groepsgesprek? Naam toevoegen"
+          aria-label="Extra persoon in dit gesprek" onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addExtra(); } }} />
+        <button type="button" className="btn small" onClick={addExtra} disabled={!extraName.trim()}>+ Naam</button>
+        {extras.map((n) => (
+          <button key={n} type="button" className="chip" onClick={() => setExtras((l) => l.filter((x) => x !== n))} aria-label={n + ' weghalen'}>{n} ✕</button>
+        ))}
+      </div>
+      <label className="field" htmlFor="pd-text">Chat (plakken, of hierboven intypen)
+        <textarea id="pd-text" value={tekst} onChange={(e) => setTekst(e.target.value)} placeholder={EXAMPLE + '\n\nOf kort: ' + keys.map((k) => k.key + ': …').join('  ')} rows={9} />
       </label>
       <p className={'hint' + (tekst && !parsed.length ? ' warn' : '')}>
         {parsed.length

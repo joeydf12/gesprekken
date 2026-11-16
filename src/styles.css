@@ -500,3 +500,15 @@ details.sec .field input, details.sec .field select, details.sec .field textarea
 .custom-facts > div { background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; }
 .custom-facts dt { font-size: 12px; font-weight: 700; color: var(--accent); text-transform: none; }
 .custom-facts dd { margin: 2px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* Snel intypen van een gesprek */
+.composer { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); }
+.composer-who { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip kbd { font: 600 11px/1 var(--font-body); padding: 2px 5px; margin-left: 4px; border-radius: 5px; background: var(--surface); color: var(--muted); border: 1px solid var(--line); }
+.chip[aria-pressed="true"] kbd { background: transparent; color: inherit; border-color: currentColor; }
+.composer-line { display: flex; gap: 8px; }
+.composer-line input { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 10px; padding: 9px 12px; font-size: 15px; }
+.composer-line input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.composer .hint { margin: 0; }
+.composer-extra { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.composer-extra input { flex: 1; min-width: 160px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); border-radius: 10px; padding: 7px 10px; font-size: 13px; }

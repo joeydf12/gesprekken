@@ -200,3 +200,41 @@ export function placeholderPhoto(seed, kind = 'portret') {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">${g}${body}</svg>`;
   return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
 }
+
+/* ---------- Snelle letters voor wie er praat ----------
+   Je typt "i: hoi" of "l: hey" en dat wordt "Joey: hoi" en "Lisa: hey".
+   Jij krijgt altijd i (van "ik") en ook je eigen eerste letter als die vrij is;
+   de ander krijgt de eerste vrije letter uit zijn of haar voornaam. */
+export const firstName = (n) => String(n || '').trim().split(/\s+/)[0] || '';
+
+export function speakerKeys(others) {
+  const used = new Set();
+  const take = (cands) => {
+    for (const c of cands) if (c && /[a-z0-9]/.test(c) && !used.has(c)) { used.add(c); return c; }
+    return null;
+  };
+  const meKey = take(['i']);
+  const list = [{ key: meKey, name: ME, me: true }];
+  for (const name of others.filter(Boolean)) {
+    const letters = name.toLowerCase().normalize('NFD').replace(/[^a-z0-9]/g, '').split('');
+    const key = take([...letters, ...'bcdfghkmnpqrstuvwxyz0123456789']);
+    list.push({ key, name, me: false });
+  }
+  // Extra snelletter voor jezelf: je eigen eerste letter, als niemand anders die heeft.
+  const alias = take([ME[0]?.toLowerCase()]);
+  if (alias) list[0].alias = alias;
+  return list;
+}
+
+const SHORT = /^(\s*(?:\[\d{1,2}:\d{2}\]\s*)?)([a-z0-9])\s*[:>]\s?(.*)$/i;
+
+/** Zet "l: tekst" om naar "Lisa: tekst" volgens de snelle letters. Andere regels blijven gelijk. */
+export function expandShortcuts(tekst, keys) {
+  const map = {};
+  keys.forEach((k) => { if (k.key) map[k.key] = k.name; if (k.alias) map[k.alias] = k.name; });
+  return String(tekst || '').split('\n').map((line) => {
+    const m = SHORT.exec(line);
+    const name = m && map[m[2].toLowerCase()];
+    return name ? `${m[1]}${name}: ${m[3]}` : line;
+  }).join('\n');
+}
