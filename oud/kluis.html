@@ -1,0 +1,1261 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Personenkluis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Figtree:wght@400;500;600&display=swap">
+<style>
+/* Layout: smalle kolom, vaste onderbalk met 3 tabs, personen als lijst met grote avatar links. */
+:root {
+  --bg: #EEF1F3;
+  --surface: #FFFFFF;
+  --surface-2: #E4E9ED;
+  --ink: #16222B;
+  --muted: #5E6D79;
+  --line: #D3DAE0;
+  --accent: #0F6E7A;
+  --accent-ink: #FFFFFF;
+  --danger: #B3261E;
+  --danger-soft: #FBE9E7;
+  --font-display: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0D1317; --surface: #151D23; --surface-2: #1E2830; --ink: #E6ECF0; --muted: #93A3AF;
+    --line: #2A3640; --accent: #4FC3D1; --accent-ink: #06262B; --danger: #FF8A80; --danger-soft: #3A1E1C;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0D1317; --surface: #151D23; --surface-2: #1E2830; --ink: #E6ECF0; --muted: #93A3AF;
+  --line: #2A3640; --accent: #4FC3D1; --accent-ink: #06262B; --danger: #FF8A80; --danger-soft: #3A1E1C;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+  -webkit-text-size-adjust: 100%;
+}
+[hidden] { display: none !important; }
+h1, h2, h3 { font-family: var(--font-display); margin: 0; text-wrap: balance; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.wrap { max-width: 640px; margin: 0 auto; }
+
+/* Inlog */
+.login { min-height: 100svh; display: grid; place-content: center; gap: 20px; max-width: 360px; margin: 0 auto; padding-block: 32px; }
+.login h1 { font-size: 2rem; }
+.login p { margin: 0; color: var(--muted); }
+.login form { display: grid; gap: 12px; }
+
+/* Velden */
+label.f { display: grid; gap: 6px; font-size: .85rem; font-weight: 600; color: var(--muted); }
+input[type=text], input[type=email], input[type=password], input[type=number], input[type=search], select, textarea {
+  width: 100%; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px;
+  background: var(--surface); color: var(--ink); font-size: 1rem;
+}
+textarea { min-height: 96px; resize: vertical; }
+.row { display: flex; gap: 10px; }
+.row > * { min-width: 0; flex: 1; }
+
+/* Knoppen */
+.btn { border: 1px solid var(--line); background: var(--surface); padding: 11px 16px; border-radius: 10px; font-weight: 600; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.danger { background: var(--danger); color: #fff; border-color: var(--danger); }
+.btn.ghost { background: transparent; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn.small { padding: 7px 12px; font-size: .875rem; }
+.msg { font-size: .9rem; min-height: 1.3em; }
+.msg.err { color: var(--danger); }
+
+/* Kop */
+.top { position: sticky; top: 0; z-index: 5; background: var(--bg); display: flex; align-items: center; gap: 12px; padding-block: 14px 10px; }
+.top h1 { font-size: 1.5rem; flex: 1; }
+.search { padding-bottom: 10px; }
+.chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 12px; scrollbar-width: none; }
+.chips::-webkit-scrollbar { display: none; }
+.chip { flex: none; border: 1px solid var(--line); background: var(--surface); padding: 6px 12px; border-radius: 999px; font-size: .85rem; font-weight: 600; }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+
+/* Personenlijst */
+.list { display: grid; gap: 10px; }
+.person { display: flex; gap: 14px; align-items: center; width: 100%; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px; }
+.avatar { flex: none; width: 56px; height: 56px; border-radius: 50%; background: var(--surface-2); color: var(--muted); display: grid; place-items: center; font-family: var(--font-display); font-weight: 700; overflow: hidden; }
+.avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pinfo { min-width: 0; flex: 1; display: grid; gap: 2px; }
+.pname { font-family: var(--font-display); font-weight: 700; font-size: 1.05rem; overflow-wrap: anywhere; }
+.psub { color: var(--muted); font-size: .9rem; overflow-wrap: anywhere; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.tag { font-size: .75rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); color: var(--muted); }
+.tag.plat { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); }
+.empty { text-align: center; color: var(--muted); padding: 40px 16px; }
+.empty b { display: block; color: var(--ink); font-family: var(--font-display); font-size: 1.15rem; margin-bottom: 4px; }
+
+/* Fotoraster */
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.thumb { aspect-ratio: 1; border: 0; padding: 0; border-radius: 8px; overflow: hidden; background: var(--surface-2); position: relative; }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.thumb .star { position: absolute; top: 4px; right: 6px; font-size: .9rem; text-shadow: 0 1px 3px rgba(0,0,0,.6); color: #fff; }
+
+/* Onderbalk */
+.nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; background: var(--surface); border-top: 1px solid var(--line);
+  padding: 8px max(16px, env(safe-area-inset-left, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)); }
+.nav-in { max-width: 640px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.nav button { border: 0; background: transparent; padding: 10px 6px; border-radius: 10px; font-weight: 600; color: var(--muted); }
+.nav button[aria-selected="true"] { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); }
+.fab { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(80px + env(safe-area-inset-bottom, 0px)); z-index: 7;
+  border: 0; border-radius: 999px; background: var(--accent); color: var(--accent-ink); padding: 14px 20px; font-weight: 700; box-shadow: 0 6px 18px rgba(0,0,0,.28); }
+
+/* Dialogen */
+dialog { border: 0; padding: 0; background: var(--bg); color: var(--ink); width: min(100vw, 640px); max-width: 100vw; max-height: 100svh; height: 100svh; margin: 0 auto; }
+dialog::backdrop { background: rgba(0,0,0,.55); }
+.dlg { display: grid; grid-template-rows: auto 1fr auto; height: 100%; }
+.dlg-h { display: flex; align-items: center; gap: 10px; padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 12px; border-bottom: 1px solid var(--line); background: var(--surface); }
+.dlg-h h2 { flex: 1; font-size: 1.2rem; }
+.dlg-b { overflow-y: auto; padding: 16px; display: grid; gap: 14px; align-content: start; }
+.dlg-f { display: flex; gap: 10px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line); background: var(--surface); }
+.dlg-f .btn { flex: 1; }
+.acc { display: grid; grid-template-columns: 120px 1fr auto; gap: 8px; align-items: start; }
+.acc .full { grid-column: 1 / -1; }
+.photo-view { width: 100%; max-height: 52svh; object-fit: contain; background: #000; border-radius: 10px; }
+
+/* Beheer */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 12px; }
+.card h2 { font-size: 1.1rem; }
+.card p { margin: 0; color: var(--muted); font-size: .92rem; }
+.stats { display: flex; gap: 20px; flex-wrap: wrap; }
+.stats div { display: grid; }
+.stats b { font-family: var(--font-display); font-size: 1.6rem; font-variant-numeric: tabular-nums; }
+.stats span { color: var(--muted); font-size: .8rem; }
+.card.zone { border-color: var(--danger); }
+@media (prefers-reduced-motion: no-preference) { .person, .btn { transition: transform .08s; } .person:active, .btn:active { transform: scale(.985); } }
+.toolbar { display: flex; gap: 8px; padding-bottom: 10px; }
+.toolbar input { flex: 1; min-width: 0; }
+.toolbar select { width: auto; flex: none; max-width: 42%; }
+.banner { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: color-mix(in srgb, var(--accent) 14%, var(--surface)); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-bottom: 12px; }
+.banner b { width: 100%; font-size: .85rem; }
+.banner button { border: 0; background: var(--surface); border-radius: 999px; padding: 6px 12px; font-weight: 600; font-size: .85rem; }
+.tag.warn { background: var(--danger-soft); color: var(--danger); }
+.bar { display: grid; grid-template-columns: 96px 1fr 28px; align-items: center; gap: 8px; font-size: .85rem; margin-bottom: 4px; }
+.bar span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar i { display: block; height: 8px; border-radius: 4px; background: var(--accent); }
+.bar b { text-align: right; font-variant-numeric: tabular-nums; }
+.banner.alert { background: var(--danger-soft); }
+
+/* Gesprekken */
+.logadd { display: grid; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
+.logadd textarea { min-height: 64px; }
+.log { display: grid; gap: 8px; margin-top: 10px; }
+.entry { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; }
+.entry .meta { font-size: .8rem; color: var(--muted); font-weight: 600; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.entry .txt { grid-column: 1 / -1; white-space: pre-wrap; overflow-wrap: anywhere; font-size: .95rem; }
+.entry.pending { border-style: dashed; }
+.lastlog { color: var(--muted); font-size: .85rem; font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Status + melding */
+.status { display: grid; gap: 6px; font-size: .92rem; }
+.status div { display: flex; gap: 8px; justify-content: space-between; flex-wrap: wrap; }
+.status span { color: var(--muted); }
+.ok { color: var(--accent); font-weight: 600; }
+.bad { color: var(--danger); font-weight: 600; }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(140px + env(safe-area-inset-bottom, 0px)); z-index: 20;
+  max-width: min(92vw, 520px); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-weight: 600; font-size: .9rem; box-shadow: 0 6px 18px rgba(0,0,0,.3); }
+.toast.err { background: var(--danger); color: #fff; }
+</style>
+</head>
+<body>
+
+<!-- Inlog -->
+<main id="loginView" class="login" hidden>
+  <div>
+    <h1>Personenkluis</h1>
+    <p>Privé. Alleen de eigenaar komt binnen.</p>
+  </div>
+  <form id="loginForm" autocomplete="on">
+    <label class="f" for="loginEmail">E-mailadres
+      <input id="loginEmail" type="email" autocomplete="username" required>
+    </label>
+    <label class="f" for="loginPass">Wachtwoord
+      <input id="loginPass" type="password" autocomplete="current-password" required>
+    </label>
+    <button class="btn primary" id="loginBtn" type="submit">Inloggen</button>
+    <div id="loginMsg" class="msg err" role="alert"></div>
+  </form>
+</main>
+
+<!-- App -->
+<div id="appView" hidden>
+  <div class="wrap">
+    <header class="top">
+      <h1 id="viewTitle">Personen</h1>
+      <button class="btn small" id="lockBtn" type="button">Uitloggen</button>
+    </header>
+
+    <section id="tabPersonen">
+      <div class="toolbar">
+        <input id="q" type="search" placeholder="Zoek op naam, plaats, interesse of gebruikersnaam" aria-label="Zoeken">
+        <select id="sortBy" aria-label="Sorteren">
+          <option value="naam">A–Z</option>
+          <option value="contact">Langst geen contact</option>
+          <option value="nieuw">Nieuwst</option>
+          <option value="leeftijd">Jongst</option>
+        </select>
+      </div>
+      <div id="bdayBanner"></div>
+      <div id="contactBanner"></div>
+      <div class="chips" id="platChips" role="group" aria-label="Filter op platform"></div>
+      <div class="list" id="personList"></div>
+    </section>
+
+    <section id="tabFotos" hidden>
+      <div class="row" style="margin-bottom:12px">
+        <label class="btn primary" for="libUpload" style="text-align:center">Foto's toevoegen</label>
+        <input id="libUpload" type="file" accept="image/*" multiple hidden>
+      </div>
+      <div id="libMsg" class="msg"></div>
+      <div class="grid" id="photoGrid"></div>
+    </section>
+
+    <section id="tabBeheer" hidden style="display:grid;gap:14px">
+      <div class="card">
+        <h2>Jouw kluis</h2>
+        <div class="stats" id="stats"></div>
+        <p>Deze gegevens staan los van de rest van je dashboard, in eigen tabellen en een eigen privé fotomap.</p>
+      </div>
+      <div class="card">
+        <h2>Koppeling met Supabase</h2>
+        <div class="status" id="connStatus"></div>
+        <button class="btn" id="reloadBtn" type="button">Opnieuw laden</button>
+      </div>
+      <div class="card">
+        <h2>Overzicht</h2>
+        <div id="overview" style="display:grid;gap:14px"></div>
+      </div>
+      <div class="card">
+        <h2>Alles ophalen</h2>
+        <p>Download één zipbestand met alle personen (data.json) en alle foto's.</p>
+        <button class="btn primary" id="exportBtn" type="button">Download zip</button>
+        <div id="exportMsg" class="msg"></div>
+      </div>
+      <div class="card">
+        <h2>Terugzetten uit zip</h2>
+        <p>Kies een zip die je eerder via Alles ophalen hebt gedownload. Alles wordt erbij gezet en bestaande personen blijven staan. Twee keer dezelfde zip terugzetten geeft dubbele personen.</p>
+        <label class="btn" for="importFile" style="text-align:center">Zip kiezen</label>
+        <input id="importFile" type="file" accept=".zip,application/zip" hidden>
+        <div id="importMsg" class="msg"></div>
+      </div>
+      <div class="card zone">
+        <h2>Alles verwijderen</h2>
+        <p>Wist alle personen, accounts en foto's in deze kluis. Je andere dashboarddata blijft staan. Dit kan niet ongedaan worden gemaakt.</p>
+        <label class="f" for="wipeConfirm">Typ VERWIJDER om te bevestigen
+          <input id="wipeConfirm" type="text" autocomplete="off" autocapitalize="characters">
+        </label>
+        <button class="btn danger" id="wipeBtn" type="button" disabled>Alles definitief wissen</button>
+        <div id="wipeMsg" class="msg"></div>
+      </div>
+    </section>
+  </div>
+
+  <button class="fab" id="addBtn" type="button">+ Nieuw</button>
+  <nav class="nav" aria-label="Hoofdmenu"><div class="nav-in" role="tablist">
+    <button role="tab" data-tab="Personen" aria-selected="true">Personen</button>
+    <button role="tab" data-tab="Fotos" aria-selected="false">Foto's</button>
+    <button role="tab" data-tab="Beheer" aria-selected="false">Beheer</button>
+  </div></nav>
+</div>
+
+<!-- Persoon bewerken -->
+<dialog id="personDlg"><form method="dialog" id="personForm" class="dlg" novalidate>
+  <div class="dlg-h"><h2 id="personDlgTitle">Nieuwe persoon</h2><button class="btn small ghost" type="button" data-close="personDlg">Sluiten</button></div>
+  <div class="dlg-b">
+    <label class="f" for="pNaam">Naam *<input id="pNaam" type="text" autocomplete="off"></label>
+    <div class="row">
+      <label class="f" for="pBijnaam">Bijnaam<input id="pBijnaam" type="text" autocomplete="off"></label>
+      <label class="f" for="pRelatie">Relatie<input id="pRelatie" type="text" list="relatieList" autocomplete="off" placeholder="gamemaatje"></label>
+      <datalist id="relatieList"><option value="Online vriend"><option value="Gamemaatje"><option value="Vriend"><option value="Kennis"><option value="Collega"><option value="Familie"><option value="Anders"></datalist>
+    </div>
+    <div class="row">
+      <label class="f" for="pGeboorte">Geboortedatum<input id="pGeboorte" type="date"></label>
+      <label class="f" for="pLeeftijd">Leeftijd (als je de datum niet weet)<input id="pLeeftijd" type="number" inputmode="numeric" min="0" max="120"></label>
+    </div>
+    <div class="row">
+      <label class="f" for="pSinds">Ken je sinds<input id="pSinds" type="date"></label>
+      <label class="f" for="pContact">Laatst gesproken<input id="pContact" type="date"></label>
+    </div>
+    <div class="row" style="align-items:end">
+      <button class="btn small" id="pToday" type="button" style="flex:none">Vandaag gesproken</button>
+      <label class="f" for="pInterval" id="pIntervalWrap">Herinner me na … dagen zonder contact<input id="pInterval" type="number" inputmode="numeric" min="1" max="365" placeholder="bijv. 30"></label>
+    </div>
+    <div class="row">
+      <label class="f" for="pPlaats">Woonplaats<input id="pPlaats" type="text" autocomplete="off"></label>
+      <label class="f" for="pLand">Land<input id="pLand" type="text" autocomplete="off"></label>
+    </div>
+    <label class="f" for="pInteresses">Interesses (met komma's)<input id="pInteresses" type="text" autocomplete="off" placeholder="darts, gamen, voetbal"></label>
+    <label class="f" for="pNotities">Notities<textarea id="pNotities"></textarea></label>
+    <label style="display:flex;gap:10px;align-items:center"><input id="pFavoriet" type="checkbox"> Favoriet</label>
+
+    <div>
+      <h3 style="font-size:1rem;margin-bottom:8px">Accounts</h3>
+      <div id="accRows" style="display:grid;gap:12px"></div>
+      <button class="btn small" id="addAcc" type="button" style="margin-top:10px">+ Account</button>
+    </div>
+
+    <div id="logSection">
+      <h3 style="font-size:1rem;margin-bottom:8px">Gesprekken</h3>
+      <div class="logadd">
+        <div class="row">
+          <label class="f" for="gDatum">Datum<input id="gDatum" type="date"></label>
+          <label class="f" for="gPlatform">Via<select id="gPlatform"></select></label>
+        </div>
+        <label class="f" for="gTekst">Waar ging het over?<textarea id="gTekst" placeholder="Onderwerpen, afspraken, dingen om te onthouden"></textarea></label>
+        <button class="btn small primary" id="gAdd" type="button" style="justify-self:start">+ Gesprek vastleggen</button>
+        <div id="gMsg" class="msg"></div>
+      </div>
+      <div class="log" id="logList"></div>
+    </div>
+
+    <div>
+      <h3 style="font-size:1rem;margin-bottom:8px">Foto's</h3>
+      <div class="grid" id="pPhotos"></div>
+      <label class="btn small" for="pUpload" style="display:inline-block;margin-top:10px">Foto's kiezen</label>
+      <input id="pUpload" type="file" accept="image/*" multiple hidden>
+      <div id="pQueue" class="msg"></div>
+    </div>
+    <div id="personMsg" class="msg err" role="alert"></div>
+  </div>
+  <div class="dlg-f">
+    <button class="btn danger" id="delPerson" type="button" hidden>Verwijderen</button>
+    <button class="btn primary" id="savePerson" type="submit">Opslaan</button>
+  </div>
+</form></dialog>
+
+<!-- Foto bekijken -->
+<dialog id="photoDlg"><div class="dlg">
+  <div class="dlg-h"><h2>Foto</h2><button class="btn small ghost" type="button" data-close="photoDlg">Sluiten</button></div>
+  <div class="dlg-b">
+    <img id="photoBig" class="photo-view" alt="">
+    <div class="row">
+      <button class="btn small" id="phPrev" type="button">‹ Vorige</button>
+      <button class="btn small" id="phNext" type="button">Volgende ›</button>
+    </div>
+    <label class="f" for="phCaption">Bijschrift<input id="phCaption" type="text" autocomplete="off"></label>
+    <label class="f" for="phPerson">Hoort bij<select id="phPerson"></select></label>
+    <div id="phMsg" class="msg err" role="alert"></div>
+  </div>
+  <div class="dlg-f">
+    <button class="btn danger" id="phDelete" type="button">Verwijderen</button>
+    <button class="btn" id="phProfile" type="button">Profielfoto</button>
+    <button class="btn primary" id="phSave" type="button">Opslaan</button>
+  </div>
+</div></dialog>
+
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script>
+(function () {
+  'use strict';
+  var SUPABASE_URL = 'https://ycnhujswvtyoldnqesig.supabase.co';
+  var SUPABASE_KEY = 'sb_publishable_0bmqQQLXlfEDmf7wL7oGIg_IwvXNGkl';
+  var BUCKET = 'kluis-fotos';
+  var PLATFORMS = ['Reddit', 'Discord', 'Telegram', 'WhatsApp', 'Instagram', 'Snapchat', 'Anders'];
+  var LOG_VIA = ['Discord', 'WhatsApp', 'Telegram', 'Reddit', 'Instagram', 'Snapchat', 'Telefoon', 'Videobellen', 'In het echt', 'Anders'];
+  var IDLE_MS = 15 * 60 * 1000;
+  var URL_TTL = 3600;                 // seconden geldig per signed URL
+  var URL_MARGIN = 10 * 60 * 1000;    // ververs als URL binnen 10 min verloopt
+  var DEFAULT_CONTACT_DAYS = 60;
+
+  var sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+    auth: { persistSession: true, autoRefreshToken: true, storageKey: 'kluis-auth' }
+  });
+
+  var $ = function (id) { return document.getElementById(id); };
+  function freshState() {
+    return {
+      uid: null, email: '', personen: [], accounts: [], fotos: [], gesprekken: [],
+      urls: {}, urlExp: {}, filterPlat: '', q: '', sort: 'naam',
+      editing: null, pending: [], pendingLog: [], accDraft: [], photoOpen: null, photoList: [], dupOk: false,
+      v2: null, loadedAt: null, lastErr: ''
+    };
+  }
+  var state = freshState();
+  var lastActive = Date.now();
+  var locking = false;
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function initials(n) {
+    var p = String(n || '?').trim().split(/\s+/);
+    return ((p[0] || '?')[0] + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase();
+  }
+  function setMsg(el, text, isErr) { el.textContent = text || ''; el.classList.toggle('err', !!isErr); }
+  var toastTimer = null;
+  function toast(text, isErr) {
+    var t = $('toast'); t.textContent = text; t.classList.toggle('err', !!isErr); t.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.hidden = true; }, isErr ? 6000 : 3000);
+  }
+  function errText(err) { return (err && (err.message || err.error_description || err.error)) || String(err); }
+  // Tabel/kolom/functie bestaat (nog) niet: migratie niet uitgevoerd.
+  function isMissing(err) {
+    return !!err && (err.code === '42P01' || err.code === '42703' || err.code === '42883' || err.code === 'PGRST202' ||
+      err.code === 'PGRST204' || err.code === 'PGRST205' || /does not exist|schema cache|could not find/i.test(err.message || ''));
+  }
+  function isAuthErr(err) {
+    return !!err && (err.status === 401 || err.code === 'PGRST301' || err.code === 'PGRST303' || /jwt|not authenticated|refresh token/i.test(err.message || ''));
+  }
+  function byId(list, id) { for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i]; return null; }
+
+  /* ---------- Datums en sorteren ---------- */
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+  function today() { var d = new Date(); return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+  function fmtDate(d) { return d ? new Date(d + 'T00:00:00').toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' }) : ''; }
+  function ageOf(p) {
+    if (p.geboortedatum) {
+      var b = new Date(p.geboortedatum + 'T00:00:00'), n = new Date();
+      var a = n.getFullYear() - b.getFullYear();
+      if (n.getMonth() < b.getMonth() || (n.getMonth() === b.getMonth() && n.getDate() < b.getDate())) a--;
+      return a;
+    }
+    return p.leeftijd;
+  }
+  function daysSince(d) {
+    if (!d) return null;
+    var n = new Date(); n.setHours(0, 0, 0, 0);
+    return Math.round((n - new Date(d + 'T00:00:00')) / 86400000);
+  }
+  function daysToBirthday(p) {
+    if (!p.geboortedatum) return null;
+    var b = new Date(p.geboortedatum + 'T00:00:00'), n = new Date(); n.setHours(0, 0, 0, 0);
+    var next = new Date(n.getFullYear(), b.getMonth(), b.getDate());
+    if (next < n) next = new Date(n.getFullYear() + 1, b.getMonth(), b.getDate());
+    return Math.round((next - n) / 86400000);
+  }
+  function contactDue(p) {
+    if (!p.contact_interval) return null;
+    var d = daysSince(p.laatst_contact);
+    if (d === null) return { never: true, over: 0 };
+    return d >= p.contact_interval ? { never: false, over: d - p.contact_interval, days: d } : null;
+  }
+  function sorter(a, b) {
+    if (a.favoriet !== b.favoriet) return a.favoriet ? -1 : 1;
+    if (state.sort === 'contact') {
+      var da = a.laatst_contact || '0000', db = b.laatst_contact || '0000';
+      if (da !== db) return da < db ? -1 : 1;
+    } else if (state.sort === 'nieuw') {
+      if (a.created_at !== b.created_at) return (b.created_at || '') < (a.created_at || '') ? -1 : 1;
+    } else if (state.sort === 'leeftijd') {
+      var x = ageOf(a), y = ageOf(b); x = x == null ? 999 : x; y = y == null ? 999 : y;
+      if (x !== y) return x - y;
+    }
+    return a.naam.localeCompare(b.naam, 'nl');
+  }
+  function renderBanners() {
+    var soon = state.personen.map(function (p) { return { p: p, d: daysToBirthday(p) }; })
+      .filter(function (x) { return x.d !== null && x.d <= 14; }).sort(function (a, b) { return a.d - b.d; });
+    $('bdayBanner').innerHTML = soon.length ? '<div class="banner"><b>Binnenkort jarig</b>' + soon.map(function (x) {
+      return '<button type="button" data-person="' + esc(x.p.id) + '">' + esc(x.p.naam) + ' · ' + (x.d === 0 ? 'vandaag 🎉' : x.d === 1 ? 'morgen' : 'over ' + x.d + ' dagen') + '</button>';
+    }).join('') + '</div>' : '';
+
+    var due = state.personen.map(function (p) { return { p: p, c: contactDue(p) }; })
+      .filter(function (x) { return x.c; }).sort(function (a, b) { return (b.c.never ? 1e6 : b.c.over) - (a.c.never ? 1e6 : a.c.over); });
+    $('contactBanner').innerHTML = due.length ? '<div class="banner alert"><b>Tijd om weer eens te praten</b>' + due.slice(0, 8).map(function (x) {
+      return '<button type="button" data-person="' + esc(x.p.id) + '">' + esc(x.p.naam) + ' · ' + (x.c.never ? 'nog nooit' : x.c.days + ' dagen') + '</button>';
+    }).join('') + (due.length > 8 ? '<span class="psub">+' + (due.length - 8) + ' meer</span>' : '') + '</div>' : '';
+  }
+  function bars(title, counts) {
+    var arr = Object.keys(counts).map(function (k) { return [k, counts[k]]; }).sort(function (a, b) { return b[1] - a[1]; }).slice(0, 6);
+    if (!arr.length) return '';
+    var max = arr[0][1];
+    return '<div><h3 style="font-size:.95rem;margin-bottom:6px">' + esc(title) + '</h3>' + arr.map(function (r) {
+      return '<div class="bar"><span>' + esc(r[0]) + '</span><i style="width:' + Math.max(6, Math.round(r[1] / max * 100)) + '%"></i><b>' + r[1] + '</b></div>';
+    }).join('') + '</div>';
+  }
+  function tally(list) { var c = {}; list.forEach(function (k) { if (k) c[k] = (c[k] || 0) + 1; }); return c; }
+
+  /* ---------- Toegang ---------- */
+  function showLogin(msg) {
+    $('appView').hidden = true; $('loginView').hidden = false;
+    setMsg($('loginMsg'), msg || '', true);
+    $('loginPass').value = '';
+  }
+  async function showApp() {
+    $('loginView').hidden = true; $('appView').hidden = false;
+    lastActive = Date.now();
+    renderAll();
+    await reload();
+  }
+  async function checkOwner() {
+    var r = await sb.rpc('kluis_is_owner');
+    if (r.error) return { ok: false, err: r.error };
+    return { ok: r.data === true };
+  }
+  async function afterLogin(session) {
+    state.uid = session.user.id; state.email = session.user.email || '';
+    var c = await checkOwner();
+    if (!c.ok) {
+      var m = c.err ? (isAuthErr(c.err) ? 'Je sessie is verlopen. Log opnieuw in.' : 'Kan de kluis niet bereiken: ' + errText(c.err)) : 'Dit account heeft geen toegang tot de kluis.';
+      state.uid = null;
+      try { await sb.auth.signOut({ scope: 'local' }); } catch (e) { /* negeren */ }
+      showLogin(m);
+      return;
+    }
+    await showApp();
+  }
+  function clearDom() {
+    ['personList', 'photoGrid', 'bdayBanner', 'contactBanner', 'platChips', 'stats', 'overview', 'accRows', 'pPhotos', 'logList', 'connStatus'].forEach(function (id) { $(id).innerHTML = ''; });
+    $('photoBig').removeAttribute('src');
+  }
+  async function lock(msg) {
+    if (locking) return; locking = true;
+    state = freshState();   // uid eerst leeg, zodat de SIGNED_OUT-listener niet nog eens lockt
+    ['personDlg', 'photoDlg'].forEach(function (d) { if ($(d).open) $(d).close(); });
+    clearDom();
+    $('sortBy').value = 'naam'; $('q').value = '';
+    try { await sb.auth.signOut({ scope: 'local' }); } catch (e) { /* negeren */ }
+    showLogin(msg);
+    locking = false;
+  }
+
+  // Inactiviteit: tijdstempel i.p.v. setTimeout, zodat het ook klopt na slaapstand van de telefoon.
+  ['click', 'keydown', 'touchstart', 'scroll', 'input'].forEach(function (ev) {
+    document.addEventListener(ev, function () { lastActive = Date.now(); }, { passive: true, capture: true });
+  });
+  function idleCheck() {
+    if (state.uid && Date.now() - lastActive > IDLE_MS) { lock('Automatisch uitgelogd na 15 minuten zonder activiteit.'); return true; }
+    return false;
+  }
+  setInterval(function () { if (!idleCheck() && state.uid) refreshUrls(); }, 30 * 1000);
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible' && state.uid && !idleCheck()) refreshUrls();
+  });
+
+  sb.auth.onAuthStateChange(function (event) {
+    // Geen Supabase-calls direct in deze callback (kan deadlocken); daarom setTimeout.
+    if (event === 'SIGNED_OUT' && state.uid) setTimeout(function () { lock('Je bent uitgelogd.'); }, 0);
+  });
+
+  $('loginForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var btn = $('loginBtn'); btn.disabled = true; setMsg($('loginMsg'), '');
+    var r = await sb.auth.signInWithPassword({ email: $('loginEmail').value.trim(), password: $('loginPass').value });
+    btn.disabled = false;
+    if (r.error || !r.data.session) {
+      var m = r.error && /fetch|network/i.test(r.error.message || '') ? 'Geen verbinding met de server. Probeer het opnieuw.' : 'Inloggen mislukt. Controleer je e-mailadres en wachtwoord.';
+      setMsg($('loginMsg'), m, true); return;
+    }
+    await afterLogin(r.data.session);
+  });
+  $('lockBtn').addEventListener('click', function () { lock(''); });
+
+  /* ---------- Data laden ---------- */
+  async function loadAll() {
+    var res = await Promise.all([
+      sb.from('kluis_personen').select('*').order('naam'),
+      sb.from('kluis_accounts').select('*').order('created_at'),
+      sb.from('kluis_fotos').select('*').order('created_at', { ascending: false }),
+      sb.from('kluis_gesprekken').select('*').order('datum', { ascending: false }).order('created_at', { ascending: false })
+    ]);
+    for (var i = 0; i < 3; i++) if (res[i].error) throw res[i].error;
+    state.personen = res[0].data || [];
+    state.accounts = res[1].data || [];
+    state.fotos = res[2].data || [];
+    if (res[3].error) {
+      if (!isMissing(res[3].error)) throw res[3].error;
+      state.v2 = false; state.gesprekken = [];
+    } else {
+      state.v2 = true; state.gesprekken = res[3].data || [];
+    }
+    await signUrls(state.fotos.map(function (f) { return f.pad; }));
+    state.loadedAt = new Date(); state.lastErr = '';
+  }
+  // Laadt alles opnieuw en tekent. Geeft false terug bij een fout (die al is getoond).
+  async function reload() {
+    try {
+      await loadAll();
+      renderAll();
+      return true;
+    } catch (err) {
+      if (isAuthErr(err)) { lock('Je sessie is verlopen. Log opnieuw in.'); return false; }
+      state.lastErr = errText(err);
+      renderAll();
+      toast('Laden mislukt: ' + state.lastErr, true);
+      return false;
+    }
+  }
+  async function signUrls(paths) {
+    var now = Date.now(), changed = 0;
+    var need = paths.filter(function (p) { return !state.urls[p] || (state.urlExp[p] || 0) < now + URL_MARGIN; });
+    for (var i = 0; i < need.length; i += 100) {
+      var chunk = need.slice(i, i + 100);
+      var r = await sb.storage.from(BUCKET).createSignedUrls(chunk, URL_TTL);
+      if (r.error) throw r.error;
+      (r.data || []).forEach(function (o) {
+        if (o.signedUrl && o.path) { state.urls[o.path] = o.signedUrl; state.urlExp[o.path] = now + URL_TTL * 1000; changed++; }
+      });
+    }
+    return changed;
+  }
+  var refreshing = false;
+  async function refreshUrls() {
+    if (refreshing || !state.uid || !state.fotos.length) return;
+    refreshing = true;
+    try {
+      var n = await signUrls(state.fotos.map(function (f) { return f.pad; }));
+      if (n) {
+        renderList(); renderGrid(); renderPersonPhotos();
+        if ($('photoDlg').open && state.photoOpen) $('photoBig').src = state.urls[state.photoOpen.pad] || '';
+      }
+    } catch (err) {
+      if (isAuthErr(err)) lock('Je sessie is verlopen. Log opnieuw in.');
+    }
+    refreshing = false;
+  }
+  function personAccounts(id) { return state.accounts.filter(function (a) { return a.persoon_id === id; }); }
+  function personFotos(id) { return state.fotos.filter(function (f) { return f.persoon_id === id; }); }
+  function personLog(id) { return state.gesprekken.filter(function (g) { return g.persoon_id === id; }); }
+  function avatarFor(p) {
+    var fs = personFotos(p.id);
+    var f = fs.filter(function (x) { return x.is_profielfoto; })[0] || fs[fs.length - 1];
+    return f && state.urls[f.pad] ? state.urls[f.pad] : '';
+  }
+
+  /* ---------- Weergave ---------- */
+  function renderAll() { renderChips(); renderList(); renderGrid(); renderStats(); renderConn(); }
+
+  function renderChips() {
+    var used = {};
+    state.accounts.forEach(function (a) { used[a.platform] = true; });
+    var names = Object.keys(used).sort();
+    if (state.filterPlat && !used[state.filterPlat]) state.filterPlat = '';
+    $('platChips').innerHTML = names.length ? ['Alle'].concat(names).map(function (n) {
+      var val = n === 'Alle' ? '' : n;
+      return '<button class="chip" type="button" data-plat="' + esc(val) + '" aria-pressed="' + (state.filterPlat === val) + '">' + esc(n) + '</button>';
+    }).join('') : '';
+  }
+
+  function matches(p) {
+    var accs = personAccounts(p.id);
+    if (state.filterPlat && !accs.some(function (a) { return a.platform === state.filterPlat; })) return false;
+    if (!state.q) return true;
+    var hay = [p.naam, p.bijnaam, p.woonplaats, p.land, p.relatie, p.notities, (p.interesses || []).join(' ')]
+      .concat(accs.map(function (a) { return (a.gebruikersnaam || '') + ' ' + (a.chat_notitie || ''); }))
+      .concat(personLog(p.id).map(function (g) { return g.samenvatting; }))
+      .join(' ').toLowerCase();
+    return hay.indexOf(state.q) !== -1;
+  }
+
+  function renderList() {
+    renderBanners();
+    if (!state.uid) return;
+    if (!state.loadedAt) { $('personList').innerHTML = '<div class="empty">' + (state.lastErr ? '<b>Kon de kluis niet laden</b>' + esc(state.lastErr) : 'Laden…') + '</div>'; return; }
+    var list = state.personen.filter(matches).sort(sorter);
+    if (!state.personen.length) {
+      $('personList').innerHTML = '<div class="empty"><b>Nog niemand in je kluis</b>Tik op + Nieuw om de eerste persoon toe te voegen.</div>';
+      return;
+    }
+    if (!list.length) { $('personList').innerHTML = '<div class="empty"><b>Niets gevonden</b>Pas je zoekopdracht of filter aan.</div>'; return; }
+    $('personList').innerHTML = list.map(function (p) {
+      var img = avatarFor(p);
+      var age = ageOf(p), dsc = daysSince(p.laatst_contact);
+      var spoke = dsc === null ? '' : dsc <= 0 ? 'vandaag gesproken' : dsc === 1 ? 'gisteren gesproken' : dsc + ' d geleden gesproken';
+      var sub = [age != null ? age + ' jaar' : '', [p.woonplaats, p.land].filter(Boolean).join(', '), p.relatie || '', spoke].filter(Boolean).join(' · ');
+      var limit = p.contact_interval || DEFAULT_CONTACT_DAYS;
+      var warnTag = dsc !== null && dsc > limit ? '<span class="tag warn">' + dsc + ' dagen geen contact</span>' : '';
+      var plats = personAccounts(p.id).map(function (a) { return '<span class="tag plat">' + esc(a.platform) + '</span>'; }).join('');
+      var ints = (p.interesses || []).slice(0, 4).map(function (i) { return '<span class="tag">' + esc(i) + '</span>'; }).join('');
+      var last = personLog(p.id)[0];
+      return '<button class="person" type="button" data-person="' + esc(p.id) + '">' +
+        '<span class="avatar">' + (img ? '<img src="' + esc(img) + '" alt="" loading="lazy">' : esc(initials(p.naam))) + '</span>' +
+        '<span class="pinfo"><span class="pname">' + (p.favoriet ? '★ ' : '') + esc(p.naam) + (p.bijnaam ? ' <span class="psub">“' + esc(p.bijnaam) + '”</span>' : '') + '</span>' +
+        (sub ? '<span class="psub">' + esc(sub) + '</span>' : '') +
+        (last ? '<span class="lastlog">' + esc(last.samenvatting.split('\n')[0]) + '</span>' : '') +
+        ((warnTag || plats || ints) ? '<span class="tags">' + warnTag + plats + ints + '</span>' : '') + '</span></button>';
+    }).join('');
+  }
+
+  function thumbHtml(f) {
+    var u = state.urls[f.pad];
+    return '<button class="thumb" type="button" data-photo="' + esc(f.id) + '">' + (u ? '<img src="' + esc(u) + '" alt="' + esc(f.bijschrift || '') + '" loading="lazy">' : '') + (f.is_profielfoto ? '<span class="star">★</span>' : '') + '</button>';
+  }
+  function renderGrid() {
+    if (!state.uid) return;
+    $('photoGrid').innerHTML = state.fotos.length ? state.fotos.map(thumbHtml).join('') :
+      '<div class="empty" style="grid-column:1/-1"><b>Je fotobibliotheek is leeg</b>Voeg foto\'s toe, los of bij een persoon.</div>';
+  }
+  function renderStats() {
+    if (!state.uid) return;
+    $('stats').innerHTML = '<div><b>' + state.personen.length + '</b><span>personen</span></div><div><b>' + state.accounts.length + '</b><span>accounts</span></div>' +
+      (state.v2 ? '<div><b>' + state.gesprekken.length + '</b><span>gesprekken</span></div>' : '') +
+      '<div><b>' + state.fotos.length + '</b><span>foto\'s</span></div>';
+    var ints = [];
+    state.personen.forEach(function (p) { (p.interesses || []).forEach(function (i) { ints.push(i.toLowerCase()); }); });
+    var html = bars('Platforms', tally(state.accounts.map(function (a) { return a.platform; }))) +
+      (state.v2 ? bars('Gesprekken via', tally(state.gesprekken.map(function (g) { return g.platform; }))) : '') +
+      bars('Landen', tally(state.personen.map(function (p) { return p.land; }))) +
+      bars('Relaties', tally(state.personen.map(function (p) { return p.relatie; }))) +
+      bars('Interesses', tally(ints));
+    $('overview').innerHTML = html || '<p style="margin:0;color:var(--muted);font-size:.92rem">Zodra je personen toevoegt, zie je hier waar ze vandaan komen en waar ze mee bezig zijn.</p>';
+  }
+  function renderConn() {
+    if (!state.uid) return;
+    var rows = [
+      ['Ingelogd als', esc(state.email || '—')],
+      ['Verbinding', state.lastErr ? '<span class="bad">Fout: ' + esc(state.lastErr) + '</span>' : state.loadedAt ? '<span class="ok">OK</span>' : 'Laden…'],
+      ['Laatst geladen', state.loadedAt ? esc(state.loadedAt.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit', second: '2-digit' })) : '—'],
+      ['Database', state.v2 === null ? '—' : state.v2 ? '<span class="ok">Bijgewerkt (gesprekken en herinneringen aan)</span>' :
+        '<span class="bad">Migratie nog niet uitgevoerd</span>']
+    ];
+    $('connStatus').innerHTML = rows.map(function (r) { return '<div><span>' + r[0] + '</span><b>' + r[1] + '</b></div>'; }).join('') +
+      (state.v2 === false ? '<p>Voer <code>supabase-migratie.sql</code> uit in de SQL Editor van Supabase om de gesprekkenlog, contactherinneringen en veilig opslaan aan te zetten.</p>' : '');
+  }
+  $('reloadBtn').addEventListener('click', async function () {
+    var b = $('reloadBtn'); b.disabled = true;
+    state.urls = {}; state.urlExp = {};
+    if (await reload()) toast('Bijgewerkt.');
+    b.disabled = false;
+  });
+
+  /* ---------- Tabs ---------- */
+  var TITLES = { Personen: 'Personen', Fotos: 'Foto\'s', Beheer: 'Beheer' };
+  function openTab(name) {
+    ['Personen', 'Fotos', 'Beheer'].forEach(function (t) { $('tab' + t).hidden = t !== name; });
+    document.querySelectorAll('.nav button').forEach(function (b) { b.setAttribute('aria-selected', String(b.dataset.tab === name)); });
+    $('viewTitle').textContent = TITLES[name];
+    $('addBtn').hidden = name !== 'Personen';
+    window.scrollTo(0, 0);
+  }
+  document.querySelector('.nav').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-tab]'); if (b) openTab(b.dataset.tab);
+  });
+  $('q').addEventListener('input', function (e) { state.q = e.target.value.trim().toLowerCase(); renderList(); });
+  $('platChips').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-plat]'); if (!b) return;
+    state.filterPlat = b.dataset.plat; renderChips(); renderList();
+  });
+  document.addEventListener('click', function (e) {
+    var c = e.target.closest('[data-close]'); if (c) $(c.dataset.close).close();
+  });
+
+  // Twee keer tikken om te bevestigen.
+  function armed(btn, label) {
+    if (btn.dataset.armed === '1') { btn.dataset.armed = ''; btn.textContent = label; clearTimeout(btn._t); return true; }
+    btn.dataset.armed = '1'; btn.textContent = 'Zeker weten?';
+    clearTimeout(btn._t); btn._t = setTimeout(function () { btn.dataset.armed = ''; btn.textContent = label; }, 3000);
+    return false;
+  }
+
+  /* ---------- Foto's verwerken ---------- */
+  async function prepareImage(file) {
+    try {
+      var bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
+      var max = 1600, s = Math.min(1, max / Math.max(bmp.width, bmp.height));
+      var c = document.createElement('canvas');
+      c.width = Math.round(bmp.width * s); c.height = Math.round(bmp.height * s);
+      c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+      if (bmp.close) bmp.close();
+      var blob = await new Promise(function (res) { c.toBlob(res, 'image/jpeg', 0.85); });
+      if (blob) return { blob: blob, type: 'image/jpeg', ext: 'jpg' };
+    } catch (err) { /* val terug op origineel */ }
+    var ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+    return { blob: file, type: file.type || 'image/jpeg', ext: ext };
+  }
+  async function uploadFiles(files, personId, progressEl) {
+    var made = 0, failed = 0, lastErr = '';
+    var hasProfile = personId ? personFotos(personId).some(function (f) { return f.is_profielfoto; }) : true;
+    for (var i = 0; i < files.length; i++) {
+      setMsg(progressEl, 'Uploaden ' + (i + 1) + ' van ' + files.length + '…');
+      var img = await prepareImage(files[i]);
+      var path = state.uid + '/' + crypto.randomUUID() + '.' + img.ext;
+      var up = await sb.storage.from(BUCKET).upload(path, img.blob, { contentType: img.type, upsert: false });
+      if (up.error) { failed++; lastErr = errText(up.error); continue; }
+      var makeProfile = !!personId && !hasProfile;
+      var ins = await sb.from('kluis_fotos').insert({ persoon_id: personId || null, pad: path, is_profielfoto: makeProfile }).select().single();
+      if (ins.error) { await sb.storage.from(BUCKET).remove([path]); failed++; lastErr = errText(ins.error); continue; }
+      if (makeProfile) hasProfile = true;
+      state.fotos.unshift(ins.data); made++;
+    }
+    try { await signUrls(state.fotos.map(function (f) { return f.pad; })); } catch (e) { /* volgende refresh probeert opnieuw */ }
+    setMsg(progressEl, failed ? made + ' geüpload, ' + failed + ' mislukt (' + lastErr + ').' : (made ? made + ' foto\'s toegevoegd.' : ''), !!failed);
+    return { made: made, failed: failed };
+  }
+  $('libUpload').addEventListener('change', async function (e) {
+    var files = Array.from(e.target.files); e.target.value = '';
+    if (!files.length) return;
+    await uploadFiles(files, null, $('libMsg'));
+    renderAll();
+  });
+
+  /* ---------- Persoon bewerken ---------- */
+  function accRowHtml(a, i) {
+    var opts = PLATFORMS.map(function (p) { return '<option' + (p === a.platform ? ' selected' : '') + '>' + esc(p) + '</option>'; }).join('');
+    return '<div class="acc" data-i="' + i + '"><select aria-label="Platform" data-f="platform">' + opts + '</select>' +
+      '<input type="text" aria-label="Gebruikersnaam" data-f="gebruikersnaam" placeholder="gebruikersnaam" value="' + esc(a.gebruikersnaam || '') + '">' +
+      '<button class="btn small" type="button" data-rm="' + i + '" aria-label="Account verwijderen">✕</button>' +
+      '<input class="full" type="text" aria-label="Notitie over de chat" data-f="chat_notitie" placeholder="waar ging de chat over?" value="' + esc(a.chat_notitie || '') + '"></div>';
+  }
+  function renderAccRows() { $('accRows').innerHTML = state.accDraft.map(accRowHtml).join(''); }
+  function renderPersonPhotos() {
+    var fs = state.editing ? personFotos(state.editing.id) : [];
+    $('pPhotos').innerHTML = fs.map(thumbHtml).join('');
+    $('pQueue').textContent = state.pending.length ? state.pending.length + ' foto\'s klaar om te uploaden bij opslaan.' : '';
+  }
+  function entryHtml(g, pendingIdx) {
+    var isPending = pendingIdx != null;
+    return '<div class="entry' + (isPending ? ' pending' : '') + '">' +
+      '<div class="meta">' + esc(fmtDate(g.datum)) + (g.platform ? '<span class="tag plat">' + esc(g.platform) + '</span>' : '') + (isPending ? '<span>wordt opgeslagen</span>' : '') + '</div>' +
+      '<button class="btn small ghost" type="button" ' + (isPending ? 'data-rmpend="' + pendingIdx + '"' : 'data-rmlog="' + esc(g.id) + '"') + ' aria-label="Gesprek verwijderen">✕</button>' +
+      '<div class="txt">' + esc(g.samenvatting) + '</div></div>';
+  }
+  function renderLog() {
+    $('logSection').hidden = !state.v2;
+    if (!state.v2) return;
+    var saved = state.editing ? personLog(state.editing.id) : [];
+    var html = state.pendingLog.map(function (g, i) { return entryHtml(g, i); }).join('') + saved.map(function (g) { return entryHtml(g); }).join('');
+    $('logList').innerHTML = html || '<p class="psub" style="margin:0">Nog geen gesprekken vastgelegd.</p>';
+  }
+  function fillLogPlatforms() {
+    var own = state.accDraft.map(function (a) { return a.platform; }).filter(function (p, i, arr) { return p && p !== 'Anders' && arr.indexOf(p) === i; });
+    var rest = LOG_VIA.filter(function (p) { return own.indexOf(p) === -1; });
+    var opts = own.concat(rest);
+    var cur = $('gPlatform').value;
+    $('gPlatform').innerHTML = '<option value="">—</option>' + opts.map(function (p) { return '<option>' + esc(p) + '</option>'; }).join('');
+    $('gPlatform').value = opts.indexOf(cur) !== -1 ? cur : (own[0] || '');
+  }
+  function openPerson(id) {
+    var p = id ? byId(state.personen, id) : null;
+    state.editing = p; state.pending = []; state.pendingLog = []; state.dupOk = false;
+    state.accDraft = p ? personAccounts(p.id).map(function (a) { return { id: a.id, platform: a.platform, gebruikersnaam: a.gebruikersnaam, chat_notitie: a.chat_notitie }; }) : [{ platform: 'Discord', gebruikersnaam: '', chat_notitie: '' }];
+    $('personDlgTitle').textContent = p ? p.naam : 'Nieuwe persoon';
+    $('pNaam').value = p ? p.naam : ''; $('pBijnaam').value = p && p.bijnaam || '';
+    $('pLeeftijd').value = p && p.leeftijd != null ? p.leeftijd : ''; $('pPlaats').value = p && p.woonplaats || '';
+    $('pGeboorte').value = p && p.geboortedatum || ''; $('pRelatie').value = p && p.relatie || '';
+    $('pSinds').value = p && p.kennis_sinds || ''; $('pContact').value = p && p.laatst_contact || '';
+    $('pInterval').value = p && p.contact_interval ? p.contact_interval : '';
+    $('pIntervalWrap').hidden = !state.v2;
+    $('pLand').value = p && p.land || ''; $('pInteresses').value = p ? (p.interesses || []).join(', ') : '';
+    $('pNotities').value = p && p.notities || ''; $('pFavoriet').checked = !!(p && p.favoriet);
+    $('delPerson').hidden = !p; $('delPerson').textContent = 'Verwijderen'; $('delPerson').dataset.armed = '';
+    $('gDatum').value = today(); $('gTekst').value = ''; setMsg($('gMsg'), '');
+    setMsg($('personMsg'), '');
+    renderAccRows(); renderPersonPhotos(); fillLogPlatforms(); renderLog();
+    $('personDlg').showModal();
+    $('personDlg').querySelector('.dlg-b').scrollTop = 0;
+  }
+  $('addBtn').addEventListener('click', function () { openPerson(null); });
+  function onPersonClick(e) { var b = e.target.closest('[data-person]'); if (b) openPerson(b.dataset.person); }
+  $('bdayBanner').addEventListener('click', onPersonClick);
+  $('contactBanner').addEventListener('click', onPersonClick);
+  $('personList').addEventListener('click', onPersonClick);
+  $('sortBy').addEventListener('change', function (e) { state.sort = e.target.value; renderList(); });
+  $('pToday').addEventListener('click', function () { $('pContact').value = today(); });
+  $('personForm').addEventListener('input', function (e) { if (e.target.closest('#accRows')) state.dupOk = false; });
+  $('accRows').addEventListener('change', function (e) { if (e.target.dataset.f === 'platform') { syncAcc(); fillLogPlatforms(); } });
+  function findDuplicate() {
+    var own = state.editing ? state.editing.id : null;
+    for (var i = 0; i < state.accDraft.length; i++) {
+      var d = state.accDraft[i], name = (d.gebruikersnaam || '').trim().toLowerCase();
+      if (!name) continue;
+      for (var j = 0; j < state.accounts.length; j++) {
+        var a = state.accounts[j];
+        if (a.persoon_id !== own && a.platform === d.platform && (a.gebruikersnaam || '').trim().toLowerCase() === name) {
+          var who = byId(state.personen, a.persoon_id);
+          return 'Deze gebruikersnaam (' + d.platform + ': ' + d.gebruikersnaam.trim() + ') staat al bij ' + (who ? who.naam : 'iemand anders') + '.';
+        }
+      }
+    }
+    return '';
+  }
+  $('addAcc').addEventListener('click', function () { syncAcc(); state.accDraft.push({ platform: 'Discord', gebruikersnaam: '', chat_notitie: '' }); renderAccRows(); fillLogPlatforms(); });
+  function syncAcc() {
+    document.querySelectorAll('#accRows .acc').forEach(function (row) {
+      var i = +row.dataset.i;
+      row.querySelectorAll('[data-f]').forEach(function (el) { state.accDraft[i][el.dataset.f] = el.value; });
+    });
+  }
+  $('accRows').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-rm]'); if (!b) return;
+    syncAcc(); state.accDraft.splice(+b.dataset.rm, 1); renderAccRows(); fillLogPlatforms(); state.dupOk = false;
+  });
+  $('pUpload').addEventListener('change', function (e) {
+    state.pending = state.pending.concat(Array.from(e.target.files)); e.target.value = ''; renderPersonPhotos();
+  });
+  $('pPhotos').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-photo]'); if (!b || !state.editing) return;
+    openPhoto(b.dataset.photo, personFotos(state.editing.id).map(function (f) { return f.id; }));
+  });
+
+  /* ---------- Gesprekken ---------- */
+  $('gAdd').addEventListener('click', async function () {
+    var tekst = $('gTekst').value.trim(), datum = $('gDatum').value || today(), via = $('gPlatform').value || null;
+    if (!tekst) { setMsg($('gMsg'), 'Schrijf kort op waar het over ging.', true); $('gTekst').focus(); return; }
+    if (datum > today()) { setMsg($('gMsg'), 'Die datum ligt in de toekomst.', true); return; }
+    var g = { datum: datum, platform: via, samenvatting: tekst };
+    if (!state.editing) {
+      state.pendingLog.unshift(g);
+    } else {
+      var btn = $('gAdd'); btn.disabled = true;
+      var r = await sb.from('kluis_gesprekken').insert(Object.assign({ persoon_id: state.editing.id }, g)).select().single();
+      btn.disabled = false;
+      if (r.error) { setMsg($('gMsg'), 'Opslaan mislukt: ' + errText(r.error), true); return; }
+      state.gesprekken.unshift(r.data);
+      state.gesprekken.sort(function (a, b) { return a.datum === b.datum ? (b.created_at < a.created_at ? -1 : 1) : (b.datum < a.datum ? -1 : 1); });
+      // De database werkt laatst_contact bij; spiegel dat lokaal en in het formulier.
+      if (!state.editing.laatst_contact || state.editing.laatst_contact < datum) state.editing.laatst_contact = datum;
+      renderList();
+    }
+    if (!$('pContact').value || $('pContact').value < datum) $('pContact').value = datum;
+    $('gTekst').value = ''; setMsg($('gMsg'), state.editing ? 'Gesprek opgeslagen.' : 'Wordt opgeslagen samen met deze persoon.');
+    renderLog();
+  });
+  $('logList').addEventListener('click', async function (e) {
+    var p = e.target.closest('[data-rmpend]');
+    if (p) { state.pendingLog.splice(+p.dataset.rmpend, 1); renderLog(); return; }
+    var b = e.target.closest('[data-rmlog]'); if (!b) return;
+    if (!armed(b, '✕')) return;
+    var id = b.dataset.rmlog;
+    var r = await sb.from('kluis_gesprekken').delete().eq('id', id);
+    if (r.error) { setMsg($('gMsg'), 'Verwijderen mislukt: ' + errText(r.error), true); return; }
+    state.gesprekken = state.gesprekken.filter(function (g) { return g.id !== id; });
+    renderLog(); renderList();
+  });
+
+  /* ---------- Persoon opslaan ---------- */
+  async function savePersonRecord(id, rec, accs) {
+    if (state.v2) {
+      var r = await sb.rpc('kluis_opslaan_persoon', { p_id: id, p_data: rec, p_accounts: accs });
+      if (r.error) throw r.error;
+      return r.data;
+    }
+    // Zonder migratie: oude manier, maar met foutcontrole op elke stap.
+    var row = Object.assign({}, rec); delete row.contact_interval;
+    var pid;
+    if (id) {
+      var u = await sb.from('kluis_personen').update(row).eq('id', id);
+      if (u.error) throw u.error;
+      pid = id;
+    } else {
+      var n = await sb.from('kluis_personen').insert(row).select().single();
+      if (n.error) throw n.error;
+      pid = n.data.id;
+    }
+    var keep = accs.map(function (a) { return { persoon_id: pid, platform: a.platform, gebruikersnaam: a.gebruikersnaam || null, chat_notitie: a.chat_notitie || null }; });
+    // Eerst nieuwe accounts toevoegen, dan pas de oude verwijderen: bij een fout gaat er niets verloren.
+    var oldIds = personAccounts(pid).map(function (a) { return a.id; });
+    if (keep.length) {
+      var ins = await sb.from('kluis_accounts').insert(keep);
+      if (ins.error) throw ins.error;
+    }
+    if (oldIds.length) {
+      var del = await sb.from('kluis_accounts').delete().in('id', oldIds);
+      if (del.error) throw del.error;
+    }
+    return pid;
+  }
+
+  $('personForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var naam = $('pNaam').value.trim();
+    if (!naam) { setMsg($('personMsg'), 'Vul een naam in.', true); $('pNaam').focus(); return; }
+    var lt = $('pLeeftijd').value.trim(), iv = $('pInterval').value.trim();
+    if (lt !== '' && !$('pGeboorte').value && !(+lt >= 0 && +lt <= 120)) { setMsg($('personMsg'), 'Leeftijd moet tussen 0 en 120 liggen.', true); return; }
+    if (iv !== '' && !(+iv >= 1 && +iv <= 365)) { setMsg($('personMsg'), 'Herinnering moet tussen 1 en 365 dagen liggen.', true); return; }
+    syncAcc();
+    var dup = findDuplicate();
+    if (dup && !state.dupOk) { state.dupOk = true; setMsg($('personMsg'), dup + ' Tik nogmaals op Opslaan als dat klopt.', true); return; }
+    state.dupOk = false;
+    var btn = $('savePerson'); btn.disabled = true; setMsg($('personMsg'), 'Opslaan…');
+    var rec = {
+      naam: naam, bijnaam: $('pBijnaam').value.trim() || null,
+      geboortedatum: $('pGeboorte').value || null,
+      leeftijd: ($('pGeboorte').value || lt === '') ? null : parseInt(lt, 10),
+      relatie: $('pRelatie').value.trim() || null, kennis_sinds: $('pSinds').value || null, laatst_contact: $('pContact').value || null,
+      woonplaats: $('pPlaats').value.trim() || null, land: $('pLand').value.trim() || null,
+      interesses: $('pInteresses').value.split(',').map(function (s) { return s.trim(); }).filter(Boolean),
+      notities: $('pNotities').value.trim() || null, favoriet: $('pFavoriet').checked,
+      contact_interval: iv === '' ? null : parseInt(iv, 10)
+    };
+    var accs = state.accDraft.filter(function (a) { return (a.gebruikersnaam || '').trim() || (a.chat_notitie || '').trim(); })
+      .map(function (a) { return { platform: a.platform, gebruikersnaam: (a.gebruikersnaam || '').trim(), chat_notitie: (a.chat_notitie || '').trim() }; });
+
+    var pid;
+    try {
+      pid = await savePersonRecord(state.editing ? state.editing.id : null, rec, accs);
+    } catch (err) {
+      btn.disabled = false;
+      if (isAuthErr(err)) { lock('Je sessie is verlopen. Log opnieuw in.'); return; }
+      setMsg($('personMsg'), 'Opslaan mislukt: ' + errText(err), true); return;
+    }
+
+    var problems = [];
+    if (state.pendingLog.length) {
+      var logs = state.pendingLog.map(function (g) { return Object.assign({ persoon_id: pid }, g); });
+      var lr = await sb.from('kluis_gesprekken').insert(logs);
+      if (lr.error) problems.push('gesprekken niet opgeslagen (' + errText(lr.error) + ')'); else state.pendingLog = [];
+    }
+    var ok = await reload();
+    if (!state.uid) return;
+    // Altijd verder werken op de opgeslagen persoon, zodat nogmaals opslaan geen dubbele maakt.
+    state.editing = byId(state.personen, pid) || state.editing;
+    if (state.pending.length) {
+      var up = await uploadFiles(state.pending, pid, $('personMsg'));
+      state.pending = [];
+      if (up.failed) problems.push(up.failed + ' foto(\'s) niet geüpload');
+      renderAll();
+    }
+    btn.disabled = false;
+    if (problems.length || !ok) {
+      $('personDlgTitle').textContent = naam; $('delPerson').hidden = false;
+      renderPersonPhotos(); renderLog();
+      setMsg($('personMsg'), 'Persoon opgeslagen, maar: ' + (problems.join('; ') || 'herladen mislukt') + '.', true);
+      return;
+    }
+    $('personDlg').close();
+    toast(naam + ' opgeslagen.');
+  });
+
+  $('delPerson').addEventListener('click', async function () {
+    var btn = $('delPerson');
+    if (!armed(btn, 'Verwijderen')) return;
+    btn.disabled = true;
+    var pid = state.editing.id, naam = state.editing.naam;
+    var paths = personFotos(pid).map(function (f) { return f.pad; });
+    // Eerst de database (fotos/accounts/gesprekken gaan mee via cascade), dan de bestanden.
+    var d = await sb.from('kluis_personen').delete().eq('id', pid);
+    if (d.error) { btn.disabled = false; setMsg($('personMsg'), 'Verwijderen mislukt: ' + errText(d.error), true); return; }
+    if (paths.length) await sb.storage.from(BUCKET).remove(paths);
+    btn.disabled = false;
+    $('personDlg').close();
+    await reload();
+    toast(naam + ' verwijderd.');
+  });
+
+  /* ---------- Foto bekijken ---------- */
+  function openPhoto(id, list) {
+    var f = byId(state.fotos, id); if (!f) return;
+    state.photoOpen = f;
+    state.photoList = list || state.fotos.map(function (x) { return x.id; });
+    var multi = state.photoList.length > 1;
+    $('phPrev').hidden = !multi; $('phNext').hidden = !multi;
+    $('photoBig').src = state.urls[f.pad] || '';
+    $('phCaption').value = f.bijschrift || '';
+    $('phPerson').innerHTML = '<option value="">Niemand (los in de bibliotheek)</option>' + state.personen.slice().sort(function (a, b) { return a.naam.localeCompare(b.naam, 'nl'); }).map(function (p) {
+      return '<option value="' + esc(p.id) + '"' + (p.id === f.persoon_id ? ' selected' : '') + '>' + esc(p.naam) + '</option>';
+    }).join('');
+    $('phProfile').hidden = !f.persoon_id || f.is_profielfoto;
+    $('phDelete').textContent = 'Verwijderen'; $('phDelete').dataset.armed = '';
+    setMsg($('phMsg'), '');
+    if (!$('photoDlg').open) $('photoDlg').showModal();
+  }
+  $('photoGrid').addEventListener('click', function (e) { var b = e.target.closest('[data-photo]'); if (b) openPhoto(b.dataset.photo); });
+  function stepPhoto(dir) {
+    var l = state.photoList, i = state.photoOpen ? l.indexOf(state.photoOpen.id) : -1;
+    if (i < 0 || l.length < 2) return;
+    openPhoto(l[(i + dir + l.length) % l.length], l);
+  }
+  $('phPrev').addEventListener('click', function () { stepPhoto(-1); });
+  $('phNext').addEventListener('click', function () { stepPhoto(1); });
+  var touchX = null;
+  $('photoBig').addEventListener('touchstart', function (e) { touchX = e.touches[0].clientX; }, { passive: true });
+  $('photoBig').addEventListener('touchend', function (e) {
+    if (touchX === null) return;
+    var dx = e.changedTouches[0].clientX - touchX; touchX = null;
+    if (Math.abs(dx) > 50) stepPhoto(dx < 0 ? 1 : -1);
+  }, { passive: true });
+  document.addEventListener('keydown', function (e) {
+    if (!$('photoDlg').open || /INPUT|SELECT|TEXTAREA/.test((document.activeElement || {}).tagName || '')) return;
+    if (e.key === 'ArrowLeft') stepPhoto(-1); else if (e.key === 'ArrowRight') stepPhoto(1);
+  });
+  async function afterPhotoChange() {
+    await reload();
+    if (state.editing) state.editing = byId(state.personen, state.editing.id);
+    renderPersonPhotos();
+    $('photoDlg').close();
+  }
+  $('phSave').addEventListener('click', async function () {
+    var f = state.photoOpen, newP = $('phPerson').value || null;
+    var r = await sb.from('kluis_fotos').update({ bijschrift: $('phCaption').value.trim() || null, persoon_id: newP, is_profielfoto: newP === f.persoon_id ? f.is_profielfoto : false }).eq('id', f.id);
+    if (r.error) { setMsg($('phMsg'), 'Opslaan mislukt: ' + errText(r.error), true); return; }
+    await afterPhotoChange();
+  });
+  $('phProfile').addEventListener('click', async function () {
+    var f = state.photoOpen; if (!f.persoon_id) return;
+    var a = await sb.from('kluis_fotos').update({ is_profielfoto: false }).eq('persoon_id', f.persoon_id).neq('id', f.id);
+    if (a.error) { setMsg($('phMsg'), 'Profielfoto instellen mislukt: ' + errText(a.error), true); return; }
+    var b = await sb.from('kluis_fotos').update({ is_profielfoto: true }).eq('id', f.id);
+    if (b.error) { setMsg($('phMsg'), 'Profielfoto instellen mislukt: ' + errText(b.error), true); return; }
+    await afterPhotoChange();
+  });
+  $('phDelete').addEventListener('click', async function () {
+    var btn = $('phDelete');
+    if (!armed(btn, 'Verwijderen')) return;
+    var f = state.photoOpen;
+    var d = await sb.from('kluis_fotos').delete().eq('id', f.id);
+    if (d.error) { setMsg($('phMsg'), 'Verwijderen mislukt: ' + errText(d.error), true); return; }
+    await sb.storage.from(BUCKET).remove([f.pad]);
+    await afterPhotoChange();
+  });
+
+  /* ---------- Ophalen (export) ---------- */
+  $('exportBtn').addEventListener('click', async function () {
+    var btn = $('exportBtn'), msg = $('exportMsg'); btn.disabled = true; setMsg(msg, 'Gegevens verzamelen…');
+    try {
+      await loadAll();
+      var zip = new JSZip(), missing = 0;
+      var data = {
+        versie: 2,
+        geexporteerd_op: new Date().toISOString(),
+        personen: state.personen.map(function (p) {
+          return Object.assign({}, p, {
+            accounts: personAccounts(p.id).map(function (a) { return { platform: a.platform, gebruikersnaam: a.gebruikersnaam, chat_notitie: a.chat_notitie }; }),
+            gesprekken: personLog(p.id).map(function (g) { return { datum: g.datum, platform: g.platform, samenvatting: g.samenvatting }; }),
+            fotos: personFotos(p.id).map(function (f) { return { bestand: 'fotos/' + f.pad.split('/').pop(), bijschrift: f.bijschrift, is_profielfoto: f.is_profielfoto }; })
+          });
+        }),
+        losse_fotos: state.fotos.filter(function (f) { return !f.persoon_id; }).map(function (f) { return { bestand: 'fotos/' + f.pad.split('/').pop(), bijschrift: f.bijschrift }; })
+      };
+      zip.file('data.json', JSON.stringify(data, null, 2));
+      for (var i = 0; i < state.fotos.length; i++) {
+        setMsg(msg, 'Foto ' + (i + 1) + ' van ' + state.fotos.length + ' ophalen…');
+        var f = state.fotos[i];
+        var dl = await sb.storage.from(BUCKET).download(f.pad);
+        if (dl.error) missing++; else zip.file('fotos/' + f.pad.split('/').pop(), dl.data);
+      }
+      setMsg(msg, 'Zipbestand maken…');
+      var blob = await zip.generateAsync({ type: 'blob' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'personenkluis-' + today() + '.zip';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 10000);
+      setMsg(msg, missing ? 'Klaar, maar ' + missing + ' foto(\'s) konden niet worden opgehaald.' : 'Klaar. Het zipbestand staat in je downloads.', !!missing);
+    } catch (err) {
+      setMsg(msg, 'Ophalen mislukt: ' + errText(err), true);
+    }
+    btn.disabled = false;
+  });
+
+  /* ---------- Terugzetten uit zip ---------- */
+  var MIME = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif', heic: 'image/heic' };
+  async function storePhoto(zipEntry, personId, caption, isProfile) {
+    var ext = (zipEntry.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+    var type = MIME[ext] || 'image/jpeg';
+    var blob = new Blob([await zipEntry.async('arraybuffer')], { type: type });
+    var path = state.uid + '/' + crypto.randomUUID() + '.' + ext;
+    var up = await sb.storage.from(BUCKET).upload(path, blob, { contentType: type, upsert: false });
+    if (up.error) return false;
+    var ins = await sb.from('kluis_fotos').insert({ persoon_id: personId || null, pad: path, bijschrift: caption || null, is_profielfoto: !!isProfile });
+    if (ins.error) { await sb.storage.from(BUCKET).remove([path]); return false; }
+    return true;
+  }
+  $('importFile').addEventListener('change', async function (e) {
+    var file = e.target.files[0]; e.target.value = ''; if (!file) return;
+    var msg = $('importMsg'), made = 0, photos = 0, logs = 0, failed = 0;
+    try {
+      setMsg(msg, 'Zipbestand lezen…');
+      var zip = await JSZip.loadAsync(file);
+      var jf = zip.file('data.json');
+      if (!jf) throw new Error('data.json ontbreekt in dit zipbestand');
+      var data = JSON.parse(await jf.async('string'));
+      var list = data.personen || [];
+      for (var i = 0; i < list.length; i++) {
+        var p = list[i];
+        setMsg(msg, 'Persoon ' + (i + 1) + ' van ' + list.length + ' terugzetten…');
+        if (!p.naam) { failed++; continue; }
+        var row = {
+          naam: p.naam, bijnaam: p.bijnaam || null, geboortedatum: p.geboortedatum || null, leeftijd: p.leeftijd == null ? null : p.leeftijd,
+          woonplaats: p.woonplaats || null, land: p.land || null, interesses: p.interesses || [], notities: p.notities || null,
+          favoriet: !!p.favoriet, relatie: p.relatie || null, kennis_sinds: p.kennis_sinds || null, laatst_contact: p.laatst_contact || null
+        };
+        if (state.v2) row.contact_interval = p.contact_interval || null;
+        var ins = await sb.from('kluis_personen').insert(row).select().single();
+        if (ins.error) { failed++; continue; }
+        made++;
+        var accs = (p.accounts || []).map(function (a) { return { persoon_id: ins.data.id, platform: a.platform || 'Anders', gebruikersnaam: a.gebruikersnaam || null, chat_notitie: a.chat_notitie || null }; });
+        if (accs.length) await sb.from('kluis_accounts').insert(accs);
+        var gl = (p.gesprekken || []).filter(function (g) { return g && g.samenvatting; })
+          .map(function (g) { return { persoon_id: ins.data.id, datum: g.datum || today(), platform: g.platform || null, samenvatting: g.samenvatting }; });
+        if (state.v2 && gl.length) { var gr = await sb.from('kluis_gesprekken').insert(gl); if (!gr.error) logs += gl.length; }
+        var fl = p.fotos || [];
+        for (var j = 0; j < fl.length; j++) {
+          var entry = zip.file(fl[j].bestand);
+          if (entry && await storePhoto(entry, ins.data.id, fl[j].bijschrift, fl[j].is_profielfoto)) photos++;
+        }
+      }
+      var loose = data.losse_fotos || [];
+      for (var k = 0; k < loose.length; k++) {
+        setMsg(msg, 'Losse foto ' + (k + 1) + ' van ' + loose.length + '…');
+        var le = zip.file(loose[k].bestand);
+        if (le && await storePhoto(le, null, loose[k].bijschrift, false)) photos++;
+      }
+      state.urls = {}; state.urlExp = {}; await reload();
+      setMsg(msg, made + ' personen, ' + logs + ' gesprekken en ' + photos + ' foto\'s teruggezet' + (failed ? ', ' + failed + ' overgeslagen.' : '.'), !!failed);
+    } catch (err) {
+      setMsg(msg, 'Terugzetten mislukt: ' + errText(err), true);
+    }
+  });
+
+  /* ---------- Alles wissen ---------- */
+  $('wipeConfirm').addEventListener('input', function (e) { $('wipeBtn').disabled = e.target.value.trim() !== 'VERWIJDER'; });
+  async function listFolder(prefix) {
+    var out = [], offset = 0;
+    for (;;) {
+      var r = await sb.storage.from(BUCKET).list(prefix, { limit: 100, offset: offset });
+      if (r.error || !r.data || !r.data.length) break;
+      r.data.forEach(function (o) { if (o.id) out.push(prefix + '/' + o.name); });
+      if (r.data.length < 100) break;
+      offset += 100;
+    }
+    return out;
+  }
+  $('wipeBtn').addEventListener('click', async function () {
+    var btn = $('wipeBtn'), msg = $('wipeMsg'); btn.disabled = true;
+    try {
+      setMsg(msg, 'Gegevens verwijderen…');
+      var paths = {};
+      state.fotos.forEach(function (f) { paths[f.pad] = true; });
+      (await listFolder(state.uid)).forEach(function (p) { paths[p] = true; });
+      var w = await sb.rpc('kluis_wis_alles');
+      if (w.error) throw w.error;
+      setMsg(msg, 'Foto\'s verwijderen…');
+      var all = Object.keys(paths);
+      for (var i = 0; i < all.length; i += 100) {
+        var r = await sb.storage.from(BUCKET).remove(all.slice(i, i + 100));
+        if (r.error) throw r.error;
+      }
+      state.urls = {}; state.urlExp = {}; await reload();
+      $('wipeConfirm').value = '';
+      setMsg(msg, 'Alles is gewist. De kluis is leeg.');
+    } catch (err) {
+      setMsg(msg, 'Wissen mislukt: ' + errText(err), true);
+      btn.disabled = false;
+    }
+  });
+
+  /* ---------- Start ---------- */
+  openTab('Personen');
+  (async function boot() {
+    var s = await sb.auth.getSession();
+    if (s.data && s.data.session) await afterLogin(s.data.session); else showLogin('');
+  })();
+})();
+</script>
+</body>
+</html>
